@@ -1,0 +1,47 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    tools:context=".main">
+
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="25"
+        android:text="Intro"
+        android:id="@+id/button1"
+        android:background="@drawable/flat_selector"
+        android:textColor="@android:color/white"
+        android:onClick="beginActivity"/>
+
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="25"
+        android:text="Wi-Fi"
+        android:id="@+id/button2"
+        android:background="@drawable/flat_selector"
+        android:textColor="@android:color/white"
+        android:onClick="beginActivity" />
+
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="25"
+        android:text="Scan"
+        android:id="@+id/button3"
+        android:background="@drawable/flat_selector"
+        android:textColor="@android:color/white"
+        android:onClick="beginActivity"/>
+
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="25"
+        android:text="Info"
+        android:id="@+id/button4"
+        android:background="@drawable/flat_selector"
+        android:textColor="@android:color/white"
+        android:onClick="beginActivity" />
+</LinearLayout>
