@@ -1,8 +1,10 @@
 package com.fyp.nfc.nfcapp;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.nfc.NdefMessage;
@@ -15,6 +17,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,11 +33,37 @@ public class scan extends Activity {
 
     private TextView mTextView;
     private NfcAdapter mNfcAdapter;
+    private int scanStatus = 0;
+
+    public void openDialog(){
+        scanStatus = 1;
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setMessage("Please Scan");
+        alertDialogBuilder.setCancelable(true);
+        alertDialogBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialogInterface) {
+                scanStatus = 0;
+                Log.v("check", String.valueOf(scanStatus));
+            }
+        });
+
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scan);
+
+        final Button button = (Button) findViewById(R.id.button_scan);
+        button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                openDialog();
+            }
+        });
 
         mTextView = (TextView) findViewById(R.id.tv);
 
@@ -73,7 +103,6 @@ public class scan extends Activity {
          * Call this before onPause, otherwise an IllegalArgumentException is thrown as well.
          */
         stopForegroundDispatch(this, mNfcAdapter);
-
         super.onPause();
     }
 
@@ -86,39 +115,41 @@ public class scan extends Activity {
          *
          * In our case this method gets called, when the user attaches a Tag to the device.
          */
+        Context context = getApplicationContext();
+        CharSequence text = "Hello toast!";
+        int duration = Toast.LENGTH_SHORT;
+        Toast toast = Toast.makeText(context, text, duration);
+        toast.show();
+
         handleIntent(intent);
     }
 
     private void handleIntent(Intent intent) {
-        Context context = getApplicationContext();
-        CharSequence text = "Hello toast!";
-        int duration = Toast.LENGTH_SHORT;
+        if(scanStatus!=0) {
+            String action = intent.getAction();
+            if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)) {
 
-        Toast toast = Toast.makeText(context, text, duration);
-        toast.show();
-        String action = intent.getAction();
-        if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)) {
+                String type = intent.getType();
+                if (MIME_TEXT_PLAIN.equals(type)) {
 
-            String type = intent.getType();
-            if (MIME_TEXT_PLAIN.equals(type)) {
-
-                Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
-                new NdefReaderTask().execute(tag);
-
-            } else {
-                Log.d(TAG, "Wrong mime type: " + type);
-            }
-        } else if (NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)) {
-
-            // In case we would still use the Tech Discovered Intent
-            Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
-            String[] techList = tag.getTechList();
-            String searchedTech = Ndef.class.getName();
-
-            for (String tech : techList) {
-                if (searchedTech.equals(tech)) {
+                    Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
                     new NdefReaderTask().execute(tag);
-                    break;
+
+                } else {
+                    Log.d(TAG, "Wrong mime type: " + type);
+                }
+            } else if (NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)) {
+
+                // In case we would still use the Tech Discovered Intent
+                Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+                String[] techList = tag.getTechList();
+                String searchedTech = Ndef.class.getName();
+
+                for (String tech : techList) {
+                    if (searchedTech.equals(tech)) {
+                        new NdefReaderTask().execute(tag);
+                        break;
+                    }
                 }
             }
         }

@@ -9,6 +9,7 @@
     tools:context="com.fyp.nfc.nfcapp.info">
 
     <TextView
+        android:id="@+id/tv"
         android:text="@string/title_activity_info"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
