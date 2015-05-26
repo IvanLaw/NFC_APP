@@ -12,6 +12,7 @@ import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.Ndef;
+import android.nfc.tech.NdefFormatable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -23,8 +24,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.Arrays;
-
+import java.util.Locale;
 
 public class scan extends Activity {
 
@@ -33,7 +35,9 @@ public class scan extends Activity {
 
     private TextView mTextView;
     private NfcAdapter mNfcAdapter;
-    private int scanStatus = 0;
+    private MifareUltralightTagTester mMifareUltranlightTag;
+
+    private int scanStatus = 0; // control when can be scan, 0 -> lock, 1 -> open
 
     public void openDialog(){
         scanStatus = 1;
@@ -196,22 +200,32 @@ public class scan extends Activity {
             Tag tag = params[0];
 
             Ndef ndef = Ndef.get(tag);
+
             if (ndef == null) {
                 // NDEF is not supported by this Tag.
                 return null;
             }
 
-            NdefMessage ndefMessage = ndef.getCachedNdefMessage();
-            Log.v("check", ndefMessage.toString());
-            NdefRecord[] records = ndefMessage.getRecords();
-            for (NdefRecord ndefRecord : records) {
-                if (ndefRecord.getTnf() == NdefRecord.TNF_WELL_KNOWN && Arrays.equals(ndefRecord.getType(), NdefRecord.RTD_TEXT)) {
-                    try {
-                        return readText(ndefRecord);
-                    } catch (UnsupportedEncodingException e) {
-                        Log.e(TAG, "Unsupported Encoding", e);
+            Locale locale = Locale.US;
+            String payload = "Fuck u";
+
+
+            try {
+                ndef.connect();
+                if(ndef.isConnected() && ndef.isWritable()) {
+                    NdefRecord records = createTextRecord(payload, locale, true);
+                    NdefMessage message = new NdefMessage(records);
+                    Log.v("check", message.toString());
+                    if(ndef.getMaxSize() > message.getByteArrayLength()) {
+                        ndef.writeNdefMessage(message);
                     }
                 }
+
+                ndef.close();
+                return payload;
+            }
+            catch (Exception e){
+                //do error handling
             }
 
             return null;
@@ -248,6 +262,21 @@ public class scan extends Activity {
             if (result != null) {
                 mTextView.setText("Read content: " + result);
             }
+        }
+
+        public NdefRecord createTextRecord(String payload, Locale locale, boolean encodeInUtf8) {
+            byte[] langBytes = locale.getLanguage().getBytes(Charset.forName("US-ASCII"));
+            Charset utfEncoding = encodeInUtf8 ? Charset.forName("UTF-8") : Charset.forName("UTF-16");
+            byte[] textBytes = payload.getBytes(utfEncoding);
+            int utfBit = encodeInUtf8 ? 0 : (1 << 7);
+            char status = (char) (utfBit + langBytes.length);
+            byte[] data = new byte[1 + langBytes.length + textBytes.length];
+            data[0] = (byte) status;
+            System.arraycopy(langBytes, 0, data, 1, langBytes.length);
+            System.arraycopy(textBytes, 0, data, 1 + langBytes.length, textBytes.length);
+            NdefRecord record = new NdefRecord(NdefRecord.TNF_WELL_KNOWN,
+                    NdefRecord.RTD_TEXT, new byte[0], data);
+            return record;
         }
     }
 }
