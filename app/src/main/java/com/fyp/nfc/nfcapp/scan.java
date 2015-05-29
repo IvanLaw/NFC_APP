@@ -31,14 +31,13 @@ import java.util.Locale;
 public class scan extends Activity {
 
     public static final String MIME_TEXT_PLAIN = "text/plain";
-    public static final String TAG = "NfcDemo";
+    public static final String TAG = "NFC_TEST";
 
     private TextView mTextView;
     private NfcAdapter mNfcAdapter;
-    private MifareUltralightTagTester mMifareUltranlightTag;
 
     private int scanStatus = 0; // control when can be scan, 0 -> lock, 1 -> open
-
+    //a pop-up window to trigger the scan function
     public void openDialog(){
         scanStatus = 1;
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
@@ -186,8 +185,8 @@ public class scan extends Activity {
     }
 
     /**
-     * @param activity The corresponding {@link BaseActivity} requesting to stop the foreground dispatch.
-     * @param adapter The {@link NfcAdapter} used for the foreground dispatch.
+     * @param activity corresponding requesting to stop the foreground dispatch.
+     * @param adapter used for the foreground dispatch.
      */
     public static void stopForegroundDispatch(final Activity activity, NfcAdapter adapter) {
         adapter.disableForegroundDispatch(activity);
@@ -199,62 +198,14 @@ public class scan extends Activity {
         protected String doInBackground(Tag... params) {
             Tag tag = params[0];
 
-            Ndef ndef = Ndef.get(tag);
+            NfcController nNfcController = new NfcController(tag);
 
-            if (ndef == null) {
-                // NDEF is not supported by this Tag.
-                return null;
-            }
+            String msg = "HEHE";
 
-            Locale locale = Locale.US;
-            String payload = "Fuck u";
-
-
-            try {
-                ndef.connect();
-                if(ndef.isConnected() && ndef.isWritable()) {
-                    NdefRecord records = createTextRecord(payload, locale, true);
-                    NdefMessage message = new NdefMessage(records);
-                    Log.v("check", message.toString());
-                    if(ndef.getMaxSize() > message.getByteArrayLength()) {
-                        ndef.writeNdefMessage(message);
-                    }
-                }
-
-                ndef.close();
-                return payload;
-            }
-            catch (Exception e){
-                //do error handling
-            }
+            if(nNfcController.writeMsg(msg))
+                return msg;
 
             return null;
-        }
-
-        private String readText(NdefRecord record) throws UnsupportedEncodingException {
-        /*
-         * See NFC forum specification for "Text Record Type Definition" at 3.2.1
-         *
-         * http://www.nfc-forum.org/specs/
-         *
-         * bit_7 defines encoding
-         * bit_6 reserved for future use, must be 0
-         * bit_5..0 length of IANA language code
-         */
-
-            byte[] payload = record.getPayload();
-
-            // Get the Text Encoding
-            String textEncoding = ((payload[0] & 128) == 0) ? "UTF-8" : "UTF-16";
-
-            // Get the Language Code
-            int languageCodeLength = payload[0] & 0063;
-
-            // String languageCode = new String(payload, 1, languageCodeLength, "US-ASCII");
-            // e.g. "en"
-
-            // Get the Text
-            return new String(payload, languageCodeLength + 1, payload.length - languageCodeLength - 1, textEncoding);
         }
 
         @Override
@@ -262,21 +213,6 @@ public class scan extends Activity {
             if (result != null) {
                 mTextView.setText("Read content: " + result);
             }
-        }
-
-        public NdefRecord createTextRecord(String payload, Locale locale, boolean encodeInUtf8) {
-            byte[] langBytes = locale.getLanguage().getBytes(Charset.forName("US-ASCII"));
-            Charset utfEncoding = encodeInUtf8 ? Charset.forName("UTF-8") : Charset.forName("UTF-16");
-            byte[] textBytes = payload.getBytes(utfEncoding);
-            int utfBit = encodeInUtf8 ? 0 : (1 << 7);
-            char status = (char) (utfBit + langBytes.length);
-            byte[] data = new byte[1 + langBytes.length + textBytes.length];
-            data[0] = (byte) status;
-            System.arraycopy(langBytes, 0, data, 1, langBytes.length);
-            System.arraycopy(textBytes, 0, data, 1 + langBytes.length, textBytes.length);
-            NdefRecord record = new NdefRecord(NdefRecord.TNF_WELL_KNOWN,
-                    NdefRecord.RTD_TEXT, new byte[0], data);
-            return record;
         }
     }
 }
