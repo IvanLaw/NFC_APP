@@ -33,8 +33,10 @@ public class scan extends Activity {
     public static final String MIME_TEXT_PLAIN = "text/plain";
     public static final String TAG = "NFC_TEST";
 
-    private TextView mTextView;
+
+    private TextView mTextView, mTextView2;
     private NfcAdapter mNfcAdapter;
+    private WifiState wifiState = new WifiState();
 
     private int scanStatus = 0; // control when can be scan, 0 -> lock, 1 -> open
     //a pop-up window to trigger the scan function
@@ -61,16 +63,26 @@ public class scan extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scan);
 
-        final Button button = (Button) findViewById(R.id.button_scan);
-        button.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                openDialog();
-            }
-        });
+
 
         mTextView = (TextView) findViewById(R.id.tv);
-
+        mTextView2 = (TextView) findViewById(R.id.tv2);
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
+
+        final Button button = (Button) findViewById(R.id.button_scan);
+
+        int i = wifiState.checkWifiState(this);//wifi status
+        mTextView2.setText(wifiState.StatusMessage(i));
+
+        if(mNfcAdapter != null & mNfcAdapter.isEnabled() & i==0) {
+            button.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    openDialog();
+                }
+            });
+        }
+
+
 
         if (mNfcAdapter == null) {
             // Stop here, we definitely need NFC

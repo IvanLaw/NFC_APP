@@ -8,5 +8,7 @@
     <string name="title_activity_wifi">wifi</string>
     <string name="title_activity_scan">scan</string>
     <string name="title_activity_info">info</string>
+    <string name="title_activity_login">LoginActivity</string>
+
 
 </resources>

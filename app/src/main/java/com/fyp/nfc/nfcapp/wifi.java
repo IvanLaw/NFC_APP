@@ -10,48 +10,31 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.TextView;
-
+import com.fyp.nfc.nfcapp.WifiState;
 
 public class wifi extends Activity {
 
     private TextView mTextView;
     private String wifi_SSID = "\"CityU WLAN (WPA)\"";
+    private WifiState wifiState = new WifiState();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_wifi);
         mTextView = (TextView)findViewById(R.id.tv);
-        checkWifiState(this, wifi_SSID);
-
+        int i = wifiState.checkWifiState(this);
+        mTextView.setText(wifiState.StatusMessage(i));
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        checkWifiState(this, wifi_SSID);
+        int i = wifiState.checkWifiState(this);
+        mTextView.setText(wifiState.StatusMessage(i));
     }
 
-    public boolean checkWifiState(Context context, String wifi_SSID){
-        try {
-            WifiManager mWifiManager=(WifiManager)context.getSystemService(Context.WIFI_SERVICE);
-            WifiInfo wifiInfo=mWifiManager.getConnectionInfo();
-            if (!mWifiManager.isWifiEnabled() || wifiInfo.getSSID() == null) {
-                mTextView.setText("Wi-Fi is not enabled");
-                return false;
-            }
 
-            if (!wifiInfo.getSSID().equals(wifi_SSID)) {
-                mTextView.setText("Please connect our Wi-Fi: " + wifi_SSID);
-                return false;
-            }
-
-            mTextView.setText("Wi-Fi is connected");
-            return true;
-        }
-        catch (  Exception e) {
-            return false;
-        }
-    }
 
 
 
